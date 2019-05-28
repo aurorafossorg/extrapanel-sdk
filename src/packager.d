@@ -47,7 +47,7 @@ public static int _package(string inputPath, string outputPath) {
 			while(!configMenuFileSource.eof) {
 				string line = configMenuFileSource.readln();
 				if(line.find("id=\"configWindow\"").length > 0) {
-					writeln("found: \"", line, "\"");
+					//writeln("found: \"", line, "\"");
 					line = line.replace("id=\"configWindow\"", "id=\"" ~ pluginInfo.id ~ "_configWindow\"");
 				}
 				configMenuFileTarget.write(line);
@@ -65,15 +65,14 @@ public static int _package(string inputPath, string outputPath) {
 			if (result != 0) {
 				writeln("ERROR: Error compiling \"", name, "\" Lua script!");
 				return -1;
-			} else {
-				writeln("Script ", name, " compiled successfully!");
 			}
 		}
-		writeln("[5/6] Lua script compiled");
+		writeln("[5/6] Lua scripts compiled");
 
 		// Copy main files to tmp folder
 		copy(buildPath(rootPath, "meta.json"), buildPath(workDir, "meta.json"));
 		copy(buildPath(rootPath, "pc", "default.cfg"), buildPath(workDir, "default.cfg"));
+		copy(buildPath(workDir, "default.cfg"), buildPath(workDir, "config.cfg"));
 		mkdir(buildPath(workDir, "assets"));
 		copy(buildPath(rootPath, "assets", "icon.png"), buildPath(workDir, "assets", "icon.png"));
 		writeln("[6/6] Copied files successfully");
