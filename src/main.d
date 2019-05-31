@@ -39,7 +39,7 @@ int main(string[] args) {
 			i++;
 			string outputPath = (i+1) < args.length ? args[i+1] : ".";
 			i++;
-			return _test(inputPath, outputPath);
+			return _test(inputPath);
 
 		// Unknown option
 		} else {

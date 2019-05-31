@@ -1,8 +1,5 @@
 module packager;
 
-import util : mkdir, findRootPath;
-import plugin;
-
 import std.stdio;
 import std.file;
 import std.json;
@@ -12,6 +9,9 @@ import std.array;
 import std.string;
 import std.process;
 
+import util : mkdir, findRootPath, createTempPath;
+import plugin;
+
 public static int _package(string inputPath, string outputPath) {
 	try {
 		string rootPath = inputPath;
@@ -19,7 +19,7 @@ public static int _package(string inputPath, string outputPath) {
 			writeln("ERROR > Make sure \"", inputPath, "\" contains the file \"meta.json\"");
 			return -1;
 		}
-		writeln("[1/6] Found meta.json at \"" ~ buildPath(rootPath, "meta.json") ~ "\"");
+		writeln("[1/7] Found meta.json at \"" ~ buildPath(rootPath, "meta.json") ~ "\"");
 		
 		JSONValue j = parseJSON(readText(buildPath(rootPath, "meta.json")));
 		PluginInfo pluginInfo = new PluginInfo(
@@ -31,23 +31,24 @@ public static int _package(string inputPath, string outputPath) {
 			j["url"].str,			// URL
 			string[].init,			// Authors
 			"repoUrl" in j ? j["repoUrl"].str : "unspecified");	// Repository URL
-		writeln("[2/6] Parsed JSON properties.");
+		writeln("[2/7] Parsed JSON properties.");
 
-		string workDir = buildPath(outputPath, pluginInfo.id);
-		mkdir(workDir);
-		writeln("[3/6] Made output \"", workDir, "\" directory on \"", outputPath, "\"");
+		string tmpDir = buildPath(createTempPath(), "sdk", pluginInfo.id);
+		if(exists(tmpDir))
+			rmdirRecurse(tmpDir);
+		mkdir(tmpDir);
+		writeln("[3/7] Created temporary directory at \"", tmpDir, "\"");
 
 		// Modify UI's id's
 		string configMenuPath = buildPath(rootPath, "pc", "configMenu.ui");
 		if(!exists(configMenuPath)) {
-			writeln("[4/6] Plugin has no config menu, continuing...");
+			writeln("[4/7] Plugin has no config menu, continuing...");
 		} else {
 			File configMenuFileSource = File(configMenuPath, "r");
-			File configMenuFileTarget = File(buildPath(workDir, "configMenu.ui"), "w");
+			File configMenuFileTarget = File(buildPath(tmpDir, "configMenu.ui"), "w");
 			while(!configMenuFileSource.eof) {
 				string line = configMenuFileSource.readln();
 				if(line.find("id=\"configWindow\"").length > 0) {
-					//writeln("found: \"", line, "\"");
 					line = line.replace("id=\"configWindow\"", "id=\"" ~ pluginInfo.id ~ "_configWindow\"");
 				}
 				configMenuFileTarget.write(line);
@@ -55,27 +56,41 @@ public static int _package(string inputPath, string outputPath) {
 
 			configMenuFileSource.close();
 			configMenuFileTarget.close();
-			writeln("[4/6] Configuration UI parsed successfully.");
+			writeln("[4/7] Configuration UI parsed successfully.");
 		}
 
 		// Compile the Lua scripts
 		foreach(string name; dirEntries(buildPath(rootPath, "pc"), "*.lua", SpanMode.depth)) {
 			string filename = baseName(name);
-			int result = wait(spawnProcess(["luac", "-o", buildPath(workDir, filename), name]));
+			int result = wait(spawnProcess(["luac", "-o", buildPath(tmpDir, filename), name]));
 			if (result != 0) {
 				writeln("ERROR: Error compiling \"", name, "\" Lua script!");
 				return -1;
 			}
 		}
-		writeln("[5/6] Lua scripts compiled");
+		writeln("[5/7] Lua scripts compiled");
 
 		// Copy main files to tmp folder
+		copy(buildPath(rootPath, "meta.json"), buildPath(tmpDir, "meta.json"));
+		copy(buildPath(rootPath, "pc", "default.cfg"), buildPath(tmpDir, "default.cfg"));
+		copy(buildPath(tmpDir, "default.cfg"), buildPath(tmpDir, "config.cfg"));
+		mkdir(buildPath(tmpDir, "assets"));
+		copy(buildPath(rootPath, "assets", "icon.png"), buildPath(tmpDir, "assets", "icon.png"));
+		writeln("[6/7] Copied files successfully");
+
+		string compressedName = pluginInfo.id ~ ".tar.gz";
+		string workDir = buildPath(outputPath, pluginInfo.id);
+		mkdir(outputPath);
+		mkdir(workDir);
+		int result = wait(spawnProcess(["tar", "czf", buildPath(workDir, compressedName),
+		"-C", buildPath(createTempPath(), "sdk"), pluginInfo.id]));
+		if(result != 0) {
+			writeln("ERROR: Error compressing archive!");
+		}
+
 		copy(buildPath(rootPath, "meta.json"), buildPath(workDir, "meta.json"));
-		copy(buildPath(rootPath, "pc", "default.cfg"), buildPath(workDir, "default.cfg"));
-		copy(buildPath(workDir, "default.cfg"), buildPath(workDir, "config.cfg"));
-		mkdir(buildPath(workDir, "assets"));
-		copy(buildPath(rootPath, "assets", "icon.png"), buildPath(workDir, "assets", "icon.png"));
-		writeln("[6/6] Copied files successfully");
+		copy(buildPath(rootPath, "assets", "icon.png"), buildPath(workDir, "icon.png"));
+		writeln("[7/7] Plugin compressed and stored on \"", workDir, "\" successfully");
 
 		writeln("Plugin packaged with success");
 
