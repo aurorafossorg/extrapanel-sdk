@@ -1,6 +1,6 @@
-module bootstrapper;
+module extrapanel.sdk.bootstrapper;
 
-import util;
+import util = extrapanel.sdk.util;
 
 import std.file;
 import std.path;

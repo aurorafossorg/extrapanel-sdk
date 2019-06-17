@@ -1,9 +1,9 @@
-module tester;
+module extrapanel.sdk.tester;
 
 import riverd.lua.statfun;
 import riverd.lua.types;
 
-import util: findRootPath, stackDump;
+import extrapanel.sdk.util: findRootPath, stackDump;
 import std.path;
 import std.stdio;
 import std.file;

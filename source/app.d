@@ -1,13 +1,13 @@
-module main;
+module app;
 
 import std.stdio;
 
-import bootstrapper;
-import packager;
-import tester;
+import extrapanel.sdk.bootstrapper;
+import extrapanel.sdk.packager;
+import extrapanel.sdk.tester;
 
 /**
- *	main.d - Entrypoint for the SDK
+ *	app.d - Entrypoint for the SDK
  */
 
 string output;
