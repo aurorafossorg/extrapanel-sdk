@@ -1,4 +1,4 @@
-module packager;
+module extrapanel.sdk.packager;
 
 import std.stdio;
 import std.file;
@@ -9,8 +9,8 @@ import std.array;
 import std.string;
 import std.process;
 
-import util : mkdir, findRootPath, createTempPath;
-import plugin;
+import extrapanel.sdk.util : mkdir, findRootPath, createTempPath;
+import extrapanel.sdk.plugin;
 
 public static int _package(string inputPath, string outputPath) {
 	try {

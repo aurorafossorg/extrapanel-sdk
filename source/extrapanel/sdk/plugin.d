@@ -1,4 +1,4 @@
-module extrapanel.plugin;
+module extrapanel.sdk.plugin;
 
 /**
  *	plugin.d - General plugin indo

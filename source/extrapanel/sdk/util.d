@@ -1,4 +1,4 @@
-module util;
+module extrapanel.sdk.util;
 
 import riverd.lua.statfun;
 import riverd.lua.types;
