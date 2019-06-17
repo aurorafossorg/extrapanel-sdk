@@ -2,6 +2,8 @@
 build.ninja
 /build
 /.dub
+/out
+dub.selections.json
 
 # Temporary Glade Files
 /data/ui/#window.ui#
